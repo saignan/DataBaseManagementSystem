@@ -73,7 +73,7 @@ alter table Payroll alter column TotalAmount int;
 alter table Dependent Add Relation varchar(30);
 
 select * from ProjectDetails
-select * from Department
+--select * from Department
 select * from Employee
 select * from Dependent
 select * from Payroll
@@ -118,4 +118,114 @@ insert into Employee
 values(315,'Shashi','Male',25,9876501111,204,106),(316,'Varun','Male',28,9659808897,205,101),(317,'Teja','Male',27,7809808461,203,106),
 (318,'Vaishali','Female',27,6789108466,206,101),(319,'Dinesh','Male',29,6789408406,205,102),(320,'Priya','Female',25,6798708461,205,104),(301,'Raj','Male',25,9876543210,205,102);
 
+---BuiltIn Functions
+--Aggregate Functions--
 
+select AVG(TotalAmount) AvgSalary from Salary;
+select count(ProjectName) NumberOfProjectsAvailable from ProjectDetails;
+select MAX(TotalAmount) MaxSalary from Payroll;
+select MIN(Age) MinimumAge from Employee;
+select SUM(NoOfEmployees) SumOfEmployees from Department;
+
+
+select * from Employee;
+select * from Payroll;
+--String Functions--
+
+SELECT EmpName,ASCII(EmpName) AS NumCodeOfFirstChar
+FROM Employee order by NumCodeOfFirstChar;
+
+SELECT CHAR(98) AS CodeToCharacter;
+--The CHARINDEX() function searches for a substring in a string, and returns the position
+SELECT CHARINDEX('o', 'employee') AS MatchPosition;
+
+select concat(EmpName,' ',Age) as NameAge from Employee;
+
+select EmpName+' '+Gender as NameGender from Employee;
+
+--CONCAT_WS(separator, string1,.., string_n) function adds two or more strings together with a separator.
+select concat_ws('-',EmpName,Age) as NameAge from Employee;
+
+select max(DATALENGTH(EmpName)) as MaxLength from Employee;
+
+SELECT DATALENGTH('Saignan     '); --o/p:12
+SELECT LEN('Saignan    '); --o/p:7
+
+select DIFFERENCE(TaxAmount,TotalAmount) from Payroll;
+
+select FORMAT(ContactNumber,'+91 ###-###-####') as Numbers from Dependent;
+
+DECLARE @d DATETIME = '05/24/2023';
+SELECT FORMAT (@d, 'd', 'en-US') AS 'US English Result',
+               FORMAT (@d, 'd', 'no') AS 'Norwegian Result',
+               FORMAT (@d, 'd', 'zu') AS 'Zulu Result';
+
+SELECT EmpName,LEFT(EmpName, 3) AS ExtractString from Employee;
+
+select LOWER(Empname) as Name from Employee;
+
+SELECT LTRIM('     Sai gnan      ') AS LeftTrimmedString; 
+
+
+
+
+
+--1.Scalar Functions: 
+SELECT dbo.mul(5,7); -- Output: 25
+
+CREATE FUNCTION dbo.MUL(@number1 INT,@number2 Int)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @result INT;
+    SET @result = @number1 * @number2;
+    RETURN @result;
+END;
+
+---2.Table Valued Function
+CREATE FUNCTION dbo.GetEmployeesByProjectId(@ProjectId INT)
+RETURNS TABLE
+AS
+RETURN (
+    SELECT EmpID, EmpName
+    FROM Employee
+    WHERE ProjectId = @ProjectId
+)
+
+select * from dbo.GetEmployeesByProjectId(101);
+
+
+
+
+select * from Employee;
+select * from ProjectDetails;
+---JOINS---
+--INNER JOIN
+---Write a query to print Employee names,who are assigned for 'House Price Prediction'project 
+select e.EmpName from Employee as e Inner join ProjectDetails as p on 
+p.ProjectId=e.ProjectId where p.ProjectName='House Price prediction';
+
+--LEFT JOIN
+select * from Employee as e Left join ProjectDetails as p on 
+p.ProjectId=e.ProjectId;
+
+--RIGHT JOIN
+select * from Employee as e Right join ProjectDetails as p on 
+p.ProjectId=e.ProjectId;
+
+--FULL OUTER JOIN
+select * from Employee as e full outer join Payroll as p on 
+p.EmpId=e.EmpId;
+
+--Self join
+---write a query to retrive employeeId with is Dependent's Name
+select distinct e1.EmpId as EmployeeId,e2.Name as DependentName from Dependent e1,Dependent e2
+where e1.EmpId=e2.EmpId order by e1.EmpId;
+
+
+---Indexing---
+--Creating Index for Employee table
+create index IndexColumn on employee(EmpName);
+
+--Remove index
+drop index IndexColumn on employee;
