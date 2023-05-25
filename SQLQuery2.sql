@@ -229,3 +229,161 @@ create index IndexColumn on employee(EmpName);
 
 --Remove index
 drop index IndexColumn on employee;
+
+
+
+select * from Payroll
+-----SQL VIEWS-----
+--creating view
+
+create view viewtable as
+select EmpName,Gender from Employee
+where ProjectId=101;
+
+select * from viewtable;
+
+create view virtualTable as
+select e.EmpName,p.TotalAmount from Employee e inner join Payroll p
+on e.EmpId=p.EmpId where p.TotalAmount>60000;
+
+select * from virtualTable;
+
+--To alter virtual table 
+alter view viewtable as
+select EmpName,Gender,Age from Employee
+where ProjectId=101;
+
+---To Drop View
+drop view viewtable;
+
+----STORED PROCEDURE----
+select * from Employee
+--create stored procedure
+create procedure Employeedetails
+as
+begin
+    select EmpId,EmpName,Gender,Age from Employee
+end
+--we can execute with as follows
+Employeedetails
+
+exec Employeedetails
+
+execute Employeedetails
+
+--stored procedure with parameters
+create proc EmployeeDetailsWithDeparmentandProject
+@DepartmentId int,
+@ProjectId int
+as
+begin
+   select EmpId,EmpName,Gender,Age from Employee where ProjectId=@ProjectId
+   and DepartmentId=@DepartmentId
+end
+--To execute query
+EmployeeDetailsWithDeparmentandProject 204,101
+--or
+EmployeeDetailsWithDeparmentandProject @ProjectId=101,@DepartmentId=204
+
+sp_helptext Employeedetails --will get text of stored procedure
+
+--to change in stored procedure
+alter procedure Employeedetails
+as
+begin
+    select EmpId,EmpName from Employee
+end
+
+--To drop a stored procedure
+drop procedure Employeedetails
+
+----To create Stored Procedure with output Parameters
+create procedure EmployeeCountByGender
+@Gender nvarchar(20),
+@EmployeeCount int Output
+as 
+Begin
+   select @EmployeeCount=COUNT(EmpId) from Employee
+   where Gender=@Gender
+end
+
+--To execute the stored procedure with output parameters
+Declare @TotalCount int
+Execute EmployeeCountByGender 'Male' ,@TotalCount Output
+print @TotalCount
+
+sp_helptext EmployeeCountByGender --to get text of stored procedure
+sp_help EmployeeCountByGender
+sp_help employee --we get details of any database object
+sp_depends EmployeeCountByGender --To know the dependencies
+
+
+---views get saved in the database, and can be available to other queries and stored procedures.
+--Example
+select * from employee
+select * from department
+create view VEMployeeCount
+as
+select d.DepartmentName,d.DepartmentId,COUNT(*) as TotalEmployees from Employee e inner join Department d
+on e.DepartmentId=d.DepartmentId group by d.DepartmentName,d.DepartmentId
+
+select DepartmentName,TotalEmployees from VEmployeeCount
+where TotalEmployees>1;
+
+--Same using Derived Tables#Derived tables are available only in the context of the current query
+
+select DepartmentName,TotalEmployees
+from (
+       select d.DepartmentName,d.DepartmentId,COUNT(*) as TotalEmployees from Employee e inner join Department d
+on e.DepartmentId=d.DepartmentId group by d.DepartmentName,d.DepartmentId
+     )
+as EmployeeCount where TotalEmployees>1;
+
+---A CTE can be thought of as a temporary result set that is defined within the execution scope of a single select,insert,update,delete or create view statement..  
+with EmployeeCount(DepartmentName,DepartmentId,Totalemployees)
+as
+(
+select d.DepartmentName,d.DepartmentId,COUNT(*) as TotalEmployees from Employee e inner join Department d
+on e.DepartmentId=d.DepartmentId group by d.DepartmentName,d.DepartmentId
+)
+select DepartmentName,Totalemployees from EmployeeCount where Totalemployees>1;
+
+-->creating multiple CommonTableExpression's using a single WITH clause
+with EmployeeCountOfSecurityProductDev(DepartmentName,Totalemployees)
+as
+(
+select d.DepartmentName,COUNT(*) as TotalEmployees from Employee e inner join Department d
+on e.DepartmentId=d.DepartmentId where DepartmentName in ('Security','Product Development') group by d.DepartmentName
+),
+EmployeeCountOfQualityAsuranceAdmin(DepartmentName,Totalemployees)
+as
+(
+select d.DepartmentName,COUNT(*) as TotalEmployees from Employee e inner join Department d
+on e.DepartmentId=d.DepartmentId where DepartmentName in ('Quality Assurance','Admin Department') group by d.DepartmentName)
+select * from EmployeeCountOfSecurityProductDev union
+select * from EmployeeCountOfQualityAsuranceAdmin
+
+
+---Exceptional Handling
+CREATE PROC divide(
+    @a decimal,
+    @b decimal,
+    @c decimal output
+) AS
+BEGIN
+    BEGIN TRY
+        SET @c = @a / @b;
+    END TRY
+    BEGIN CATCH
+        SELECT  
+            ERROR_NUMBER() AS ErrorNumber  
+            ,ERROR_SEVERITY() AS ErrorSeverity  
+            ,ERROR_STATE() AS ErrorState  
+            ,ERROR_PROCEDURE() AS ErrorProcedure  
+            ,ERROR_LINE() AS ErrorLine  
+            ,ERROR_MESSAGE() AS ErrorMessage;  
+    END CATCH
+END;
+DECLARE @r2 decimal;
+EXEC divide 10, 0, @r2 output;
+PRINT @r2;
